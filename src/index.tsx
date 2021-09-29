@@ -1,10 +1,12 @@
 import React from 'react'
 import ReactDOM from 'react-dom'
 
+import { Canvas } from './main/canvas';
 import './index.css'
 
 ReactDOM.render(
-    <h1>Hello React!</h1>,
+    <div className="appContainer">
+        <Canvas></Canvas>
+    </div>,
     document.getElementById('app-root'),
-)
-
+);
