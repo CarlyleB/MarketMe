@@ -1,6 +1,7 @@
 import React,{ Component, PointerEvent as ReactPointerEvent } from 'react'
 
 import { IDimensions, IViewBoxSpecs } from '../main/canvas';
+import { Mover } from './moveable';
 import { DragMove } from './draggable';
 import '../index.css'
 
@@ -18,6 +19,7 @@ interface IPosition {
 }
 
 export class Room extends Component<IRoomProps, IRoomState> {
+    private svg: React.RefObject<SVGSVGElement>;
 
     constructor(props: IRoomProps) {
         super(props);
@@ -28,6 +30,7 @@ export class Room extends Component<IRoomProps, IRoomState> {
             height: 100,
             dragOrigin: { x: 0, y: 0 }
         };
+        this.svg = React.createRef();
     }
 
     private readonly _calcPosition = (mousePos: number, clickOffset: number, maxPos: number): number => {
@@ -60,13 +63,12 @@ export class Room extends Component<IRoomProps, IRoomState> {
 
     render() {
         return (
-            <DragMove onDragMove={this._handleDragMove} onDragStart={this._handleDragStart} className="dragMove" isSvg={true}>
-                <svg viewBox={this.props.viewBox.description}>
-                    <g style={{ transform: `translateX(${this.state.x}px) translateY(${this.state.y}px)` }}>
-                        <rect x={0} y={0} width={this.state.width} height={this.state.height} fill="red" />  
-                    </g>
-                </svg>
-            </DragMove>
+            <svg ref={this.svg} viewBox={this.props.viewBox.description}>
+                <g style={{ transform: `translateX(${this.state.x}px) translateY(${this.state.y}px)` }}>
+                    <rect x={0} y={0} width={this.state.width} height={this.state.height} fill="red" />
+                    <Mover target={document.querySelector("#svg-1") as HTMLElement}></Mover>
+                </g>
+            </svg>
         );
     }
 }

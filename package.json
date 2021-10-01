@@ -1,5 +1,5 @@
 {
-  "name": "market-me",
+  "name": "casa-canvas",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -36,6 +36,7 @@
   "dependencies": {
     "@emotion/react": "^11.4.1",
     "@emotion/styled": "^11.3.0",
-    "@mui/material": "^5.0.0-rc.1"
+    "@mui/material": "^5.0.0-rc.1",
+    "react-moveable": "^0.29.0"
   }
 }

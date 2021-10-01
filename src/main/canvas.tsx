@@ -5,6 +5,8 @@ import Container from '@mui/material/Container';
 
 import { Room } from '../components/room';
 import '../index.css'
+import { Button } from '@mui/material';
+import { Mover } from '../components/moveable';
 
 const sx = {
     width: '100%',
@@ -15,6 +17,7 @@ const sx = {
 
 interface CanvasState {
     viewBox?: IViewBoxSpecs;
+    rooms: Array<IRoom>;
 }
 
 export interface IDimensions {
@@ -26,13 +29,21 @@ export interface IViewBoxSpecs extends IDimensions {
     description: string;
 }
 
+export interface IRoom {
+    id: number;
+    name?: string;
+    clicked?: boolean;
+}
+
 export class Canvas extends React.Component<{}, CanvasState> {
     private _container: React.RefObject<HTMLDivElement>;
 
     constructor(props: {}) {
         super(props);
         this._container = React.createRef();
-        this.state = {};
+        this.state = {
+            rooms: []
+        };
     }
 
     componentDidMount() {
@@ -44,15 +55,28 @@ export class Canvas extends React.Component<{}, CanvasState> {
         }
     }
 
+    private readonly _onClickAddRoom = (): void => {
+        this.setState((curState) => {
+            return {
+                rooms: curState.rooms.concat({id: curState.rooms.length + 1})
+            }
+        });
+    }
+
+    private readonly _onPointerMove = () => {
+
+    }
+
     render() {
         const renderContent = (vb: IViewBoxSpecs) => (
-            <div>
-                <Room viewBox={vb}></Room>
-            </div>
+            <svg viewBox={vb.description}>
+                { this.state.rooms.map((r) => <Room key={r.id} viewBox={vb}></Room>) }
+            </svg>
         );
 
         return (
-            <Container className="canvasWrapper">                    
+            <Container id="svg-1" className="canvasWrapper">
+                <Button variant="outlined" onClick={this._onClickAddRoom}>Add a Room</Button>
                 <Box sx={sx} ref={this._container}>
                     {this.state.viewBox && renderContent(this.state.viewBox)}
                 </Box>
