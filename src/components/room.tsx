@@ -66,7 +66,6 @@ export class Room extends Component<IRoomProps, IRoomState> {
             <svg ref={this.svg} viewBox={this.props.viewBox.description}>
                 <g style={{ transform: `translateX(${this.state.x}px) translateY(${this.state.y}px)` }}>
                     <rect x={0} y={0} width={this.state.width} height={this.state.height} fill="red" />
-                    <Mover target={document.querySelector("#svg-1") as HTMLElement}></Mover>
                 </g>
             </svg>
         );

@@ -1,157 +1,169 @@
-import React from "react";
-import { Component } from "react";
-import Moveable, { OnScale, OnRotate, OnDrag, OnResize } from "react-moveable";
+import React, { ReactNode } from "react";
+import ReactDOM from "react-dom";
+import { Button } from '@mui/material';
+import Moveable, { OnDrag, OnResize, OnRotate, OnScale, OnWarp } from "react-moveable";
+import { ref } from "framework-utils";
+import { setAlias, Frame } from "scenejs";
+import { IObject } from "@daybrush/utils";
+import { IViewBoxSpecs } from "../main/canvas";
+import { Room } from "./room";
+
+setAlias("tx", ["transform", "translateX"]);
+setAlias("ty", ["transform", "translateY"]);
+setAlias("tz", ["transform", "translateZ"]);
+setAlias("rotate", ["transform", "rotate"]);
+setAlias("sx", ["transform", "scaleX"]);
+setAlias("sy", ["transform", "scaleY"]);
+setAlias("matrix3d", ["transform", "matrix3d"]);
 
 interface IMoverProps {
-    target: HTMLElement | SVGElement;
+    // ichildren: ReactNode;
+    viewBox: IViewBoxSpecs;
 }
 
-export class Mover extends Component<IMoverProps, {}> {
-    private matrix: number[] = [];
+interface IMoverState {
+    target: HTMLElement | SVGElement | null;
+    isResizable: boolean;
+    item: Frame | null;
+    rooms: Array<{id: number}>;
+}
 
-    render() {
+export class Mover extends React.Component<IMoverProps, IMoverState> {
+    public moveable: Moveable | null = null;
+
+    constructor(props: IMoverProps) {
+        super(props);
+        this.state = {
+            target: null,
+            isResizable: false,
+            item: null,
+            rooms: []
+        };
+    }
+
+    public onRotate = (e: OnRotate) => {
+        this.state.item!.set(
+            "rotate",
+            `${parseFloat(this.state.item!.get("rotate")) + e.beforeDelta}deg`
+        );
+        e.target.style.cssText += this.state.item!.toCSS();
+    }
+
+    public onDrag = (e: OnDrag) => {
+        this.state.item!.set("tx", `${parseFloat(this.state.item!.get("tx")) + e.beforeDelta[0]}px`);
+        this.state.item!.set("ty", `${parseFloat(this.state.item!.get("ty")) + e.beforeDelta[1]}px`);
+
+        e.target.style.cssText += this.state.item!.toCSS();
+    }
+
+    public onScale = (e: OnScale) => {
+        // console.log(delta);
+        this.state.item!.set("sx", this.state.item!.get("sx") * e.dist[0]);
+        this.state.item!.set("sy", this.state.item!.get("sy") * e.dist[1]);
+
+        e.target.style.cssText += this.state.item!.toCSS();
+    }
+
+    public onResize = (e: OnResize) => {
+        e.delta[0] && (e.target!.style.width = `${e.width}px`);
+        e.delta[1] && (e.target!.style.height = `${e.height}px`);
+    }
+
+    public onWarp = (e: OnWarp) => {
+        const matrix3d = this.state.item!.get("matrix3d");
+
+        if (!matrix3d) {
+            this.state.item!.set("matrix3d", e.delta);
+        } else {
+            this.state.item!.set("matrix3d", e.multiply(this.state.item!.get("matrix3d"), e.delta, 4));
+        }
+        e.target.style.cssText += this.state.item!.toCSS();
+    }
+
+    public onClick = (e: any) => {
+        const target = e.target;
+
+        console.log(target);
+        const id = target.getAttribute("data-target");
+        e.preventDefault();
+
+        if (!id) return;
+
+        const items = this.items;
+        if (!items[id]) {
+            items[id] = new Frame({
+                tz: "5px",
+                tx: "0px",
+                ty: "0px",
+                rotate: "0deg",
+                sx: 1,
+                sy: 1
+            });
+        }
+
+        if (!this.moveable!.isMoveableElement(e.target)) {
+            if (this.state.target === e.target) {
+                this.moveable!.updateRect();
+            } else {
+                const nativeEvent = e.nativeEvent;
+                const callback = () => this.moveable!.dragStart(nativeEvent);
+                this.setState({ target: e.target, item: items[id] }, callback);
+            }
+        }
+    };
+
+    public addRoom = () => {
+        this.setState((curState: IMoverState) => {
+            return {
+                rooms: curState.rooms.concat({id: curState.rooms.length + 1})
+            };
+        })
+    }
+
+    private items: IObject<Frame> = {};
+    public render() {
+        const selectedTarget = this.state.target;
+        const isResizable = this.state.isResizable;
+        const item = this.state.item;
         return (
-            <Moveable
-                target={this.props.target}
-                container={null}
-                origin={true}
-
-                /* Resize event edges */
-                edge={false}
-
-                /* draggable */
-                draggable={true}
-                throttleDrag={0}
-                onDragStart={({ target, clientX, clientY }) => {
-                    console.log("onDragStart", target);
-                }}
-                onDrag={({
-                    target,
-                    beforeDelta, beforeDist,
-                    left, top,
-                    right, bottom,
-                    delta, dist,
-                    transform,
-                    clientX, clientY,
-                }: OnDrag) => {
-                    console.log("onDrag left, top", left, top);
-                    // target!.style.left = `${left}px`;
-                    // target!.style.top = `${top}px`;
-                    console.log("onDrag translate", dist);
-                    target!.style.transform = transform;
-                }}
-                onDragEnd={({ target, isDrag, clientX, clientY }) => {
-                    console.log("onDragEnd", target, isDrag);
-                }}
-
-                /* When resize or scale, keeps a ratio of the width, height. */
-                keepRatio={true}
-
-                /* resizable*/
-                /* Only one of resizable, scalable, warpable can be used. */
-                resizable={true}
-                throttleResize={0}
-                onResizeStart={({ target , clientX, clientY}) => {
-                    console.log("onResizeStart", target);
-                }}
-                onResize={({
-                    target, width, height,
-                    dist, delta, direction,
-                    clientX, clientY,
-                }: OnResize) => {
-                    console.log("onResize", target);
-                    delta[0] && (target!.style.width = `${width}px`);
-                    delta[1] && (target!.style.height = `${height}px`);
-                }}
-                onResizeEnd={({ target, isDrag, clientX, clientY }) => {
-                    console.log("onResizeEnd", target, isDrag);
-                }}
-
-                /* scalable */
-                /* Only one of resizable, scalable, warpable can be used. */
-                scalable={true}
-                throttleScale={0}
-                onScaleStart={({ target, clientX, clientY }) => {
-                    console.log("onScaleStart", target);
-                }}
-                onScale={({
-                    target, scale, dist, delta, transform,
-                    clientX, clientY,
-                }: OnScale) => {
-                    console.log("onScale scale", scale);
-                    target!.style.transform = transform;
-                }}
-                onScaleEnd={({ target, isDrag, clientX, clientY }) => {
-                    console.log("onScaleEnd", target, isDrag);
-                }}
-
-                /* rotatable */
-                rotatable={true}
-                throttleRotate={0}
-                onRotateStart={({ target, clientX, clientY }) => {
-                    console.log("onRotateStart", target);
-                }}
-                onRotate={({
-                    target,
-                    delta, dist,
-                    transform,
-                    clientX, clientY,
-                }: OnRotate) => {
-                    console.log("onRotate", dist);
-                    target!.style.transform = transform;
-                }}
-                onRotateEnd={({ target, isDrag, clientX, clientY }) => {
-                    console.log("onRotateEnd", target, isDrag);
-                }}
-
-                /* warpable */
-                /* Only one of resizable, scalable, warpable can be used. */
-                /*
-                this.matrix = [
-                    1, 0, 0, 0,
-                    0, 1, 0, 0,
-                    0, 0, 1, 0,
-                    0, 0, 0, 1,
-                ]
-                */
-                warpable={true}
-                onWarpStart={({ target, clientX, clientY }) => {
-                    console.log("onWarpStart", target);
-                }}
-                onWarp={({
-                    target,
-                    clientX,
-                    clientY,
-                    delta,
-                    dist,
-                    multiply,
-                    transform,
-                }) => {
-                    console.log("onWarp", target);
-                    // target.style.transform = transform;
-                    this.matrix = multiply(this.matrix, delta);
-                    target.style.transform = `matrix3d(${this.matrix.join(",")})`;
-                }}
-                onWarpEnd={({ target, isDrag, clientX, clientY }) => {
-                    console.log("onWarpEnd", target, isDrag);
-                }}
-
-                // Enabling pinchable lets you use events that
-                // can be used in draggable, resizable, scalable, and rotateable.
-                pinchable={true}
-                onPinchStart={({ target, clientX, clientY, datas }) => {
-                    // pinchStart event occur before dragStart, rotateStart, scaleStart, resizeStart
-                    console.log("onPinchStart");
-                }}
-                onPinch={({ target, clientX, clientY, datas }) => {
-                    // pinch event occur before drag, rotate, scale, resize
-                    console.log("onPinch");
-                }}
-                onPinchEnd={({ isDrag, target, clientX, clientY, datas }) => {
-                    // pinchEnd event occur before dragEnd, rotateEnd, scaleEnd, resizeEnd
-                    console.log("onPinchEnd");
-                }}
-            />
+            <div>
+                <Button variant="outlined" onClick={this.addRoom}>Add a Room</Button>
+                <Moveable
+                    target={selectedTarget}
+                    container={document.body}
+                    ref={ref(this, "moveable")}
+                    keepRatio={false}
+                    origin={true}
+                    draggable={true}
+                    scalable={!isResizable}
+                    // resizable={isResizable}
+                    // warpable={true}
+                    throttleDrag={0}
+                    throttleScale={0}
+                    throttleResize={0}
+                    throttleRotate={0}
+                    rotatable={true}
+                    onRotate={this.onRotate}
+                    onDrag={this.onDrag}
+                    onScale={this.onScale}
+                    onResize={this.onResize}
+                    onWarp={this.onWarp}
+                />
+                <div
+                    className="App"
+                    onMouseDown={this.onClick}
+                    onTouchStart={this.onClick}
+                    data-target="app"
+                >
+                    <svg viewBox={this.props.viewBox.description}>
+                        {this.state.rooms.map((room) => (
+                            <g key={room.id} style={{ transform: "translate(40px, 10px)" }}>
+                                <rect data-target={"rect-" + room.id} x={0} y={0} width="50px" height="50px" fill="red" />
+                            </g>
+                        ))}
+                    </svg>
+                </div>
+            </div>
         );
     }
 }
