@@ -1,9 +1,9 @@
 import * as React from 'react';
 
-import Box from '@mui/material/Box';
-import Container from '@mui/material/Container';
+import { Box, Button, Container } from '@mui/material';
 
-import { Mover } from '../components/moveable';
+import { Mover } from '../components/mover';
+import { IRoomProps, Room } from '../components/room';
 import '../index.css';
 
 const sx = {
@@ -13,42 +13,46 @@ const sx = {
     border: '1px solid black'
 };
 
-interface CanvasState {
-    viewBox?: IViewBoxSpecs;
+interface ICanvasState {
+    viewBoxElem?: HTMLDivElement;
+    rooms: Array<IRoomProps>;
 }
 
-export interface IDimensions {
-    width: number;
-    height: number;
-}
-
-export interface IViewBoxSpecs extends IDimensions {
-    description: string;
-}
-
-export class Canvas extends React.Component<{}, CanvasState> {
-    private _container: React.RefObject<HTMLDivElement>;
+export class Canvas extends React.Component<{}, ICanvasState> {
+    private _containerRef: React.RefObject<HTMLDivElement>;
 
     constructor(props: {}) {
         super(props);
-        this._container = React.createRef();
-        this.state = {};
+        this._containerRef = React.createRef();
+        this.state = {
+            rooms: []
+        };
     }
 
     componentDidMount() {
-        if (this._container && this._container.current) {
-            const height: number = this._container.current.offsetHeight;
-            const width: number = this._container.current.offsetWidth;
-            const description: string = `0 0 ${width.toString()} ${height.toString()}`;
-            this.setState({ viewBox: { width, height, description } });
+        if (this._containerRef && this._containerRef.current) {
+            this.setState({ viewBoxElem: this._containerRef.current });
         }
+    }
+
+    private readonly _addRoom = () => {
+        this.setState((curState: ICanvasState) => {
+            return {
+                rooms: curState.rooms.concat({id: curState.rooms.length + 1})
+            };
+        })
     }
 
     render() {
         return (
-            <Container className="canvasWrapper">
-                <Box sx={sx} ref={this._container}>
-                    { this.state.viewBox && <Mover viewBox={this.state.viewBox}></Mover> }
+            <Container className='canvasWrapper'>
+                <Button variant='outlined' onClick={this._addRoom}>Add a Room</Button>
+                <Box sx={sx} ref={this._containerRef}>
+                    {this.state.viewBoxElem &&
+                        <Mover viewBoxElem={this.state.viewBoxElem}>
+                            {this.state.rooms.map((r) => <Room key={r.id} {...r}></Room>)}
+                        </Mover>
+                    }
                 </Box>
             </Container>
         );
