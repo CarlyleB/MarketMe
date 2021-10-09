@@ -53,6 +53,8 @@ export class Mover extends React.Component<IMoverProps, IMoverState> {
     }
 
     public onScale = (e: OnScale) => {
+        console.log(e);
+        console.log(this.state.item!);
         this.state.item!.set('sx', this.state.item!.get('sx') * e.dist[0]);
         this.state.item!.set('sy', this.state.item!.get('sy') * e.dist[1]);
 

@@ -3,6 +3,7 @@ import * as React from 'react';
 import { Box, Button, Container } from '@mui/material';
 
 import { Mover } from '../components/mover';
+import { Resizer } from '../components/resizer';
 import { IRoomProps, Room } from '../components/room';
 import '../index.css';
 
@@ -48,10 +49,12 @@ export class Canvas extends React.Component<{}, ICanvasState> {
             <Container className='canvasWrapper'>
                 <Button variant='outlined' onClick={this._addRoom}>Add a Room</Button>
                 <Box sx={sx} ref={this._containerRef}>
-                    {this.state.viewBoxElem &&
-                        <Mover viewBoxElem={this.state.viewBoxElem}>
+                    {this.state.viewBoxElem && <Resizer viewBoxElem={this.state.viewBoxElem}>
+                        {this.state.rooms.map((r) => <Room key={r.id} {...r}></Room>)}
+                    </Resizer>
+                        /* <Mover viewBoxElem={this.state.viewBoxElem}>
                             {this.state.rooms.map((r) => <Room key={r.id} {...r}></Room>)}
-                        </Mover>
+                        </Mover> */
                     }
                 </Box>
             </Container>
