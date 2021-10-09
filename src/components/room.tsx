@@ -15,7 +15,7 @@ export class Room extends Component<IRoomProps, {}> {
 
     render() {
         return (
-            <g key={this.props.id} style={{ transform: 'translate(40px, 10px)' }}>
+            <g key={this.props.id}>
                 <rect data-target={'rect-' + this.props.id} x={0} y={0} width='50px' height='50px' fill='red' />
             </g>
         );
