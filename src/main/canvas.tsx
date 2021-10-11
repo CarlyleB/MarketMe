@@ -1,8 +1,7 @@
 import * as React from 'react';
 import { Box, Button, Container } from '@mui/material';
 
-import { Resizer } from '../components/resizer';
-import { IRoomProps, Room } from '../components/room';
+import { Room } from '../components/room';
 import '../index.css';
 
 const sx = {
@@ -14,7 +13,7 @@ const sx = {
 
 interface ICanvasState {
     viewBoxElem?: HTMLDivElement;
-    rooms: Array<IRoomProps>;
+    rooms: Array<string>;
 }
 
 export class Canvas extends React.Component<{}, ICanvasState> {
@@ -37,7 +36,7 @@ export class Canvas extends React.Component<{}, ICanvasState> {
     private readonly _addRoom = () => {
         this.setState((curState: ICanvasState) => {
             return {
-                rooms: curState.rooms.concat({id: curState.rooms.length + 1})
+                rooms: curState.rooms.concat((curState.rooms.length + 1).toString())
             };
         })
     }
@@ -47,11 +46,16 @@ export class Canvas extends React.Component<{}, ICanvasState> {
             <Container className='canvasWrapper'>
                 <Button variant='outlined' onClick={this._addRoom}>Add a Room</Button>
                 <Box sx={sx} ref={this._containerRef}>
-                    {this.state.viewBoxElem &&
-                        <Resizer viewBoxElem={this.state.viewBoxElem}>
-                            {this.state.rooms.map((r) => <Room key={r.id} {...r}></Room>)}
-                        </Resizer>
-                    }
+                    <div>
+                        {this.state.viewBoxElem && (
+                            <svg viewBox={`0 0 ${this.state.viewBoxElem.offsetWidth} ${this.state.viewBoxElem.offsetHeight}`}>
+                                {this.state.rooms.map((r) => (
+                                    <Room key={r} id={r} viewBoxElem={this.state.viewBoxElem!}></Room>
+                                ))}
+                            </svg>
+                        )}
+                    </div>
+                    
                 </Box>
             </Container>
         );
